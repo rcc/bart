@@ -32,6 +32,8 @@
 # official policies, either expressed or implied, of Robert C. Curtis.
 ################################################################################
 
+BARTVERSION=DEV
+
 # Color constants
 NO="\033[0m"
 BR="\033[30m"
@@ -42,6 +44,17 @@ BL="\033[34m"
 MG="\033[35m"
 CY="\033[36m"
 
+# Usage command
+usage () {
+	echo "usage: bart [OPTIONS] <repository>"
+	echo "OPTIONS:"
+	echo "  -h, --help      Print usage"
+	echo "  --version       Print version"
+	echo "  --tag           Tag revision is build succeeds"
+	echo "  --release       Run the release phase of the build"
+	echo "  --branch        Specify branch to checkout"
+}
+
 # Error command
 error () {
     echo -e "[ERROR]" $* 1>&2
@@ -51,4 +64,90 @@ error () {
 warn () {
     echo -e "[WARNING]" $* 1>&2
 }
+
+# Defaults
+TAG=0
+SCM=GIT
+RELEASE=0
+BRANCH=
+BUILDSUCCESS=0
+
+# Handle Options
+while [ "${1:0:1}" == "-" ]; do
+	# Help
+	if [ "$1" == "-h" -o "$1" == "--help" ]; then
+		usage
+		exit 0
+	fi
+	# Version
+	if [ "$1" == "--version" ]; then
+		echo "$BARTVERSION"
+		exit 0
+	fi
+	# Tag
+	if [ "$1" == "--tag" ]; then
+		TAG=1
+		shift && continue
+	fi
+	# Release
+	if [ "$1" == "--release" ]; then
+		RELEASE=1
+		shift && continue
+	fi
+	# Branch
+	if [ "$1" == "--branch" ]; then
+		shift
+		BRANCH=$1
+		shift && continue
+	fi
+	warn "Unrecognized option: $1"
+	shift
+done
+# if no arguments, print usage
+if [ "$#" -eq 0 ]; then
+    usage
+    exit 1
+fi
+REPO="$1"
+shift
+
+# Create a Temporary Directory Name
+TMPREPO=$(mktemp -d -t bart)
+if [ -n "$TMPREPO" ]; then
+	trap "rm -rf $TMPREPO" EXIT
+fi
+
+# Check out repository
+if [ "$SCM" == "GIT" ]; then
+	BR_OPT=""
+	if [ -n "$BRANCH" ]; then
+		BR_OPT="-b $BRANCH"
+	fi
+	git clone $BR_OPT "$REPO" "$TMPREPO"
+else
+	error "Unknown SCM type"
+	exit 1
+fi
+
+# Source the repo's .bart file
+source "${TMPREPO}/.bart"
+if [ $? -eq 1 ]; then
+	error "Repository does not seem to have a .bart file"
+	exit 1
+fi
+
+# Tag repository
+if [ "$TAG" -eq 1 ]; then
+	echo TAG
+fi
+
+# Pre Build
+
+# Build
+
+# Post Build
+
+# Package
+
+# Release
 
