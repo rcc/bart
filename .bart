@@ -22,7 +22,11 @@ bart_post_build () {
 }
 
 bart_package () {
-	return 0
+	VER=$(git describe --tags --always)
+	sed -e "s/\(BARTVERSION=\).*/\1${VER}/" -i .bak bart
+	ARCHIVE=bart-${VER}.tgz
+	tar cvzf $ARCHIVE bart
+	echo $ARCHIVE
 }
 
 bart_release () {

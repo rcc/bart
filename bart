@@ -68,8 +68,8 @@ warn () {
 }
 
 # Defaults
-TAG=0
-SETTAG=
+DOTAG=0
+TAG=
 RELEASE=0
 BRANCH=
 DOTFILE=
@@ -88,13 +88,13 @@ while [ "${1:0:1}" == "-" ]; do
 	fi
 	# Tag
 	if [ "$1" == "--tag" ]; then
-		TAG=1
+		DOTAG=1
 		shift && continue
 	fi
 	# Set Tag
 	if [ "$1" == "--settag" ]; then
 		shift
-		SETTAG=$1
+		TAG=$1
 		shift && continue
 	fi
 	# Release
@@ -131,7 +131,8 @@ if [ -n "$TMPREPO" ]; then
 	trap "rm -rf $TMPREPO" EXIT
 fi
 
-# Check out repository
+# Clone repository
+echo "[CLONE]"
 BR_OPT=""
 if [ -n "$BRANCH" ]; then
 	BR_OPT="-b $BRANCH"
@@ -152,24 +153,26 @@ if [ $? -ne 0 ]; then
 fi
 
 # Change directory to repository
-pushd "$TMPREPO"
+ORIGPWD="$(pwd)"
+cd "$TMPREPO"
 
 # Tag repository
-if [ "$TAG" -eq 1 ]; then
+if [ "$DOTAG" -eq 1 ]; then
+	echo "[TAG]"
 	# only tag if we're not already on a tag
 	if git describe --tags --exact-match HEAD 2>/dev/null 1>/dev/null; then
 		error "This revision is already tagged"
 		exit 1
 	fi
-	if [ -z "$SETTAG" ]; then
-		SETTAG=$(bart_get_tag)
+	if [ -z "$TAG" ]; then
+		TAG=$(bart_get_tag)
 		if [ $? -ne 0 ]; then
 			error "Tagging Failed"
 			exit 1
 		fi
 	fi
-	if [ -n "$SETTAG" ]; then
-		git tag "$SETTAG"
+	if [ -n "$TAG" ]; then
+		git tag "$TAG"
 	else
 		error "No tag generated"
 		exit 1
@@ -177,31 +180,37 @@ if [ "$TAG" -eq 1 ]; then
 fi
 
 # Pre Build
+echo "[PRE BUILD]"
 if ! bart_pre_build; then
 	error "Prebuild Failed"
 	exit 1
 fi
 
 # Build
+echo "[BUILD]"
 if ! bart_build; then
 	error "Build Failed"
 	exit 1
 fi
 
 # Post Build
+echo "[POST BUILD]"
 if ! bart_post_build; then
 	error "Postbuild Failed"
 	exit 1
 fi
 
 # Package
-if ! bart_package; then
+echo "[PACKAGE]"
+PACKAGE=$(bart_package)
+if [ $? -ne 0 ]; then
 	error "Package Failed"
 	exit 1
 fi
 
 # Everything successful, push tag
-if [ "$TAG" -eq 1 ]; then
+if [ "$DOTAG" -eq 1 ]; then
+	echo "[PUSH]"
 	if ! git push --tags origin; then
 		error "Could not push tag"
 		return 1
@@ -210,10 +219,13 @@ fi
 
 # Release
 if [ "$RELEASE" -eq 1 ]; then
+	echo "[RELEASE]"
 	if ! bart_release; then
 		error "Release Failed"
 		exit 1
 	fi
+else
+	if [ -f "$PACKAGE" ]; then
+		mv -v "$PACKAGE" "${ORIGPWD}/"
+	fi
 fi
-
-popd
