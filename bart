@@ -51,8 +51,10 @@ usage () {
 	echo "  -h, --help      Print usage"
 	echo "  --version       Print version"
 	echo "  --tag           Tag revision is build succeeds"
+	echo "  --settag <>     Use supplied tag instead of generated tag"
 	echo "  --release       Run the release phase of the build"
-	echo "  --branch        Specify branch to checkout"
+	echo "  --branch <>     Specify branch to checkout"
+	echo "  --dotfile <>    Specify .bart file to use instead of default"
 }
 
 # Error command
@@ -67,10 +69,10 @@ warn () {
 
 # Defaults
 TAG=0
-SCM=GIT
+SETTAG=
 RELEASE=0
 BRANCH=
-BUILDSUCCESS=0
+DOTFILE=
 
 # Handle Options
 while [ "${1:0:1}" == "-" ]; do
@@ -89,6 +91,12 @@ while [ "${1:0:1}" == "-" ]; do
 		TAG=1
 		shift && continue
 	fi
+	# Set Tag
+	if [ "$1" == "--settag" ]; then
+		shift
+		SETTAG=$1
+		shift && continue
+	fi
 	# Release
 	if [ "$1" == "--release" ]; then
 		RELEASE=1
@@ -98,6 +106,12 @@ while [ "${1:0:1}" == "-" ]; do
 	if [ "$1" == "--branch" ]; then
 		shift
 		BRANCH=$1
+		shift && continue
+	fi
+	# Dot File
+	if [ "$1" == "--dotfile" ]; then
+		shift
+		DOTFILE=$1
 		shift && continue
 	fi
 	warn "Unrecognized option: $1"
@@ -118,36 +132,88 @@ if [ -n "$TMPREPO" ]; then
 fi
 
 # Check out repository
-if [ "$SCM" == "GIT" ]; then
-	BR_OPT=""
-	if [ -n "$BRANCH" ]; then
-		BR_OPT="-b $BRANCH"
-	fi
-	git clone $BR_OPT "$REPO" "$TMPREPO"
-else
-	error "Unknown SCM type"
+BR_OPT=""
+if [ -n "$BRANCH" ]; then
+	BR_OPT="-b $BRANCH"
+fi
+if ! git clone $BR_OPT "$REPO" "$TMPREPO"; then
+	error "Could not clone repository"
 	exit 1
 fi
 
 # Source the repo's .bart file
-source "${TMPREPO}/.bart"
-if [ $? -eq 1 ]; then
+if [ -z "$DOTFILE" ]; then
+	DOTFILE="${TMPREPO}/.bart"
+fi
+source "$DOTFILE"
+if [ $? -ne 0 ]; then
 	error "Repository does not seem to have a .bart file"
 	exit 1
 fi
 
+# Change directory to repository
+pushd "$TMPREPO"
+
 # Tag repository
 if [ "$TAG" -eq 1 ]; then
-	echo TAG
+	# only tag if we're not already on a tag
+	if git describe --tags --exact-match HEAD 2>/dev/null 1>/dev/null; then
+		error "This revision is already tagged"
+		exit 1
+	fi
+	if [ -z "$SETTAG" ]; then
+		SETTAG=$(bart_get_tag)
+		if [ $? -ne 0 ]; then
+			error "Tagging Failed"
+			exit 1
+		fi
+	fi
+	if [ -n "$SETTAG" ]; then
+		git tag "$SETTAG"
+	else
+		error "No tag generated"
+		exit 1
+	fi
 fi
 
 # Pre Build
+if ! bart_pre_build; then
+	error "Prebuild Failed"
+	exit 1
+fi
 
 # Build
+if ! bart_build; then
+	error "Build Failed"
+	exit 1
+fi
 
 # Post Build
+if ! bart_post_build; then
+	error "Postbuild Failed"
+	exit 1
+fi
 
 # Package
+if ! bart_package; then
+	error "Package Failed"
+	exit 1
+fi
+
+# Everything successful, push tag
+if [ "$TAG" -eq 1 ]; then
+	if ! git push --tags origin; then
+		error "Could not push tag"
+		return 1
+	fi
+fi
 
 # Release
+if [ "$RELEASE" -eq 1 ]; then
+	if ! bart_release; then
+		error "Release Failed"
+		exit 1
+	fi
+fi
 
+popd
