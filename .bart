@@ -6,6 +6,7 @@ bart_get_tag () {
 	TAGPREFIX=$(echo $LASTTAG | sed -e 's/\(.*[^0-9]\)[0-9]*/\1/g')
 	TAGSUFFIX=$(echo $LASTTAG | sed -e 's/.*[^0-9]//g')
 	TAGSUFFIX=$(($TAGSUFFIX + 1))
+	# Set the TAG variable as the result of this routine
 	TAG=${TAGPREFIX}${TAGSUFFIX}
 }
 
@@ -23,6 +24,7 @@ bart_post_build () {
 
 bart_package () {
 	VER=$(./buildresults/bart --version)
+	# Set the PACKAGE variable as the result of this routine
 	PACKAGE=bart-${VER}.tgz
 	(cd buildresults && tar cvzf ../$PACKAGE *)
 }
