@@ -165,8 +165,7 @@ if [ "$DOTAG" -eq 1 ]; then
 		exit 1
 	fi
 	if [ -z "$TAG" ]; then
-		TAG=$(bart_get_tag)
-		if [ $? -ne 0 ]; then
+		if ! bart_get_tag; then
 			error "Tagging Failed"
 			exit 1
 		fi
@@ -202,8 +201,8 @@ fi
 
 # Package
 echo "[PACKAGE]"
-PACKAGE=$(bart_package)
-if [ $? -ne 0 ]; then
+PACKAGE=
+if ! bart_package; then
 	error "Package Failed"
 	exit 1
 fi
