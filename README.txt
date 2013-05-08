@@ -4,7 +4,7 @@ usage: bart [OPTIONS] <repository>
 OPTIONS:
   -h, --help      Print usage
   --version       Print version
-  --tag           Tag revision is build succeeds
+  --tag           Tag revision if build succeeds
   --settag <>     Use supplied tag instead of generated tag
   --release       Run the release phase of the build
   --branch <>     Specify branch to checkout

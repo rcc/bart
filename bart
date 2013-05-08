@@ -50,7 +50,7 @@ usage () {
 	echo "OPTIONS:"
 	echo "  -h, --help      Print usage"
 	echo "  --version       Print version"
-	echo "  --tag           Tag revision is build succeeds"
+	echo "  --tag           Tag revision if build succeeds"
 	echo "  --settag <>     Use supplied tag instead of generated tag"
 	echo "  --release       Run the release phase of the build"
 	echo "  --branch <>     Specify branch to checkout"
