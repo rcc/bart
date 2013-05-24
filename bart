@@ -55,6 +55,7 @@ usage () {
 	echo "  --release       Run the release phase of the build"
 	echo "  --branch <>     Specify branch to checkout"
 	echo "  --dotfile <>    Specify .bart file to use instead of default"
+	echo "  --head          Get the current head revision"
 }
 
 # Error command
@@ -67,12 +68,19 @@ warn () {
     echo -e "[WARNING]" $* 1>&2
 }
 
+# Info command
+info () {
+    echo -e "[INFO]" $* 1>&2
+}
+
 # Defaults
 DOTAG=0
 TAG=
 RELEASE=0
 BRANCH=
+BR_OPT=
 DOTFILE=
+GETHEAD=0
 
 # Handle Options
 while [ "${1:0:1}" == "-" ]; do
@@ -106,12 +114,18 @@ while [ "${1:0:1}" == "-" ]; do
 	if [ "$1" == "--branch" ]; then
 		shift
 		BRANCH=$1
+		BR_OPT="-b $BRANCH"
 		shift && continue
 	fi
 	# Dot File
 	if [ "$1" == "--dotfile" ]; then
 		shift
 		DOTFILE=$1
+		shift && continue
+	fi
+	# Head
+	if [ "$1" == "--head" ]; then
+		GETHEAD=1
 		shift && continue
 	fi
 	warn "Unrecognized option: $1"
@@ -125,6 +139,24 @@ fi
 REPO="$1"
 shift
 
+# Get head revision if asked
+if [ "$GETHEAD" -eq 1 ]; then
+	if [ -z "$BRANCH" ]; then
+		LSREMOTE=$(git ls-remote "$REPO")
+		if [ $? -ne 0 -o -z "$LSREMOTE" ]; then
+			exit 1
+		fi
+		echo "$LSREMOTE" | awk '$2 == "HEAD" {print $1;}'
+	else
+		LSREMOTE=$(git ls-remote "$REPO" "$BRANCH")
+		if [ $? -ne 0 -o -z "$LSREMOTE" ]; then
+			exit 1
+		fi
+		echo "$LSREMOTE" | awk '{print $1;}'
+	fi
+	exit 0
+fi
+
 # Create a Temporary Directory Name
 TMPREPO=$(mktemp -d -t bart)
 if [ -n "$TMPREPO" ]; then
@@ -133,10 +165,6 @@ fi
 
 # Clone repository
 echo "[CLONE]"
-BR_OPT=""
-if [ -n "$BRANCH" ]; then
-	BR_OPT="-b $BRANCH"
-fi
 if ! git clone $BR_OPT "$REPO" "$TMPREPO"; then
 	error "Could not clone repository"
 	exit 1
@@ -161,8 +189,8 @@ if [ "$DOTAG" -eq 1 ]; then
 	echo "[TAG]"
 	# only tag if we're not already on a tag
 	if git describe --tags --exact-match HEAD 2>/dev/null 1>/dev/null; then
-		error "This revision is already tagged"
-		exit 1
+		info "This revision is already tagged"
+		exit 0
 	fi
 	if [ -z "$TAG" ]; then
 		if ! bart_get_tag; then
