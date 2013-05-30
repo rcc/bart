@@ -11,11 +11,16 @@ $(BUILDDIR)/bart : bart
 	sed -e "s/\(BARTVERSION=\).*/\1$(SCMVERSION)/" $< > $@
 	chmod +x $@
 
+$(BUILDDIR)/bartbot : bartbot
+	@[ -d "$(@D)" ] || mkdir -p "$(@D)"
+	sed -e "s/\(BARTVERSION=\).*/\1$(SCMVERSION)/" $< > $@
+	chmod +x $@
+
 
 SUDO := $(shell [ -w $(DESTDIR) ] || echo sudo)
 .PHONY : install
-install : $(BUILDDIR)/bart
-	$(SUDO) cp -v $< $(DESTDIR)/
+install : $(BUILDDIR)/bart $(BUILDDIR)/bartbot
+	$(SUDO) cp -v $^ $(DESTDIR)/
 
 
 .PHONY : clean
