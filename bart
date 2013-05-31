@@ -190,7 +190,7 @@ if [ "$DOTAG" -eq 1 ]; then
 	# only tag if we're not already on a tag
 	if git describe --tags --exact-match HEAD 2>/dev/null 1>/dev/null; then
 		info "This revision is already tagged"
-		exit 0
+		exit 1
 	fi
 	if [ -z "$TAG" ]; then
 		if ! bart_get_tag; then
