@@ -1,8 +1,8 @@
 # Build And Release Tool #
 
 Bart is a build and release tool designed to work with
-[git](http://http://git-scm.com) repositories. It is comprised of
-two separate scripts, [bart](bart) and [bartbot](bartbot).
+[git](http://git-scm.com) repositories. It is comprised of two
+separate scripts, [bart](bart) and [bartbot](bartbot).
 
 ## Bart ##
 
@@ -12,7 +12,7 @@ successful.
 
 ### Theory of operation ###
 
-- Bart first clones the specified repository to a temporary directory.  The temporary directory is created using the TMPDIR environment variable.
+- Bart first clones the specified repository to a temporary directory.  The temporary directory is created using the `TMPDIR` environment variable.
 - Next, bart will source the `.bart` file located in the root of the repository. This file defines how the repository is tagged, built, packaged, and released.
 - If asked, bart will generate a tag for the repository by calling `bart_get_tag ()` defined in the `.bart` file. This function should set the `TAG` variable and return 0 on success. Bart tags the repository prior to the build phase using the value in `TAG`.
 - The pre-build phase is run by calling `bart_pre_build ()` defined in the `.bart` file. This function should return 0 on success.
