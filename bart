@@ -54,7 +54,8 @@ usage () {
 	echo "  --settag <>     Use supplied tag instead of generated tag"
 	echo "  --release       Run the release phase of the build"
 	echo "  --branch <>     Specify branch to checkout"
-	echo "  --dotfile <>    Specify .bart file to use instead of default"
+	echo "  --dotfile <>    Specify .bart file inside of the repository to use"
+	echo "  --extdotfile <> Specify .bart file outside of the repository to use"
 	echo "  --head          Get the current head revision"
 }
 
@@ -80,6 +81,7 @@ RELEASE=0
 BRANCH=
 BR_OPT=
 DOTFILE=
+EXTDOTFILE=
 GETHEAD=0
 
 # Handle Options
@@ -117,10 +119,16 @@ while [ "${1:0:1}" == "-" ]; do
 		BR_OPT="-b $BRANCH"
 		shift && continue
 	fi
-	# Dot File
+	# Internal Dot File
 	if [ "$1" == "--dotfile" ]; then
 		shift
 		DOTFILE=$1
+		shift && continue
+	fi
+	# External Dot File
+	if [ "$1" == "--extdotfile" ]; then
+		shift
+		EXTDOTFILE=$1
 		shift && continue
 	fi
 	# Head
@@ -173,6 +181,11 @@ fi
 # Source the repo's .bart file
 if [ -z "$DOTFILE" ]; then
 	DOTFILE="${TMPREPO}/.bart"
+else
+	DOTFILE="${TMPREPO}/${DOTFILE}"
+fi
+if [ -n "$EXTDOTFILE" ]; then
+	DOTFILE="${EXTDOTFILE}"
 fi
 source "$DOTFILE"
 if [ $? -ne 0 ]; then

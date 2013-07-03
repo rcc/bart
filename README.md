@@ -34,7 +34,9 @@ successful.
 	--settag <>     Use supplied tag instead of generated tag
 	--release       Run the release phase of the build
 	--branch <>     Specify branch to checkout
-	--dotfile <>    Specify .bart file to use instead of default
+	--dotfile <>    Specify .bart file inside of the repository to use
+	--extdotfile <> Specify .bart file outside of the repository to use
+	--head          Get the current head revision
 
 ## Bartbot ##
 
