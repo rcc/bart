@@ -75,6 +75,7 @@ info () {
 TAGOPT=
 SETTAGOPT=
 RELEASEOPT=
+DOTFILEOPT=
 INITPRJ=0
 REPO=
 
@@ -138,6 +139,7 @@ if [ "$INITPRJ" -eq 1 ]; then
 	echo "BRANCH=master" >> "$PRJFILE"
 	echo "DESTDIR=$(dirname $PRJFILE)" >> "$PRJFILE"
 	echo "LASTBUILD=" >> "$PRJFILE"
+	echo "DOTFILE=" >> "$PRJFILE"
 	exit 0
 fi
 
@@ -159,6 +161,9 @@ if [ ! -d "$DESTDIR" ]; then
 	error "DESTDIR does not exist"
 	exit 1
 fi
+if [ -n "$DOTFILE" ]; then
+	DOTFILEOPT="--dotfile $DOTFILE"
+fi
 
 CURRENTCHANGE=$(bart --branch $BRANCH --head "$REPO")
 
@@ -172,7 +177,7 @@ if [ $? -ne 0 ]; then
 	error "Could not CD to DESTDIR"
 	exit 1
 fi
-bart --branch $BRANCH $TAGOPT $SETTAGOPT $RELEASEOPT "$REPO"
+bart --branch $BRANCH $TAGOPT $SETTAGOPT $RELEASEOPT $DOTFILEOPT "$REPO"
 if [ $? -ne 0 ]; then
 	error "Build Failed"
 	exit 1

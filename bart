@@ -166,7 +166,7 @@ if [ "$GETHEAD" -eq 1 ]; then
 fi
 
 # Create a Temporary Directory Name
-TMPREPO=$(mktemp -d -t bart)
+TMPREPO=$(mktemp -d -t bartXXXX)
 if [ -n "$TMPREPO" ]; then
 	trap "rm -rf $TMPREPO" EXIT
 fi
