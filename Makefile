@@ -5,6 +5,8 @@ BUILDDIR ?= buildresults
 
 DESTDIR ?= /usr/bin
 
+.PHONY: all
+all : $(BUILDDIR)/bart $(BUILDDIR)/bartbot
 
 $(BUILDDIR)/bart : bart
 	@[ -d "$(@D)" ] || mkdir -p "$(@D)"
