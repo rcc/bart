@@ -44,6 +44,8 @@ BL="\033[34m"
 MG="\033[35m"
 CY="\033[36m"
 
+HOSTOS=$(uname -s)
+
 # Usage command
 usage () {
 	echo "usage: bart [OPTIONS] <repository>"
@@ -166,7 +168,11 @@ if [ "$GETHEAD" -eq 1 ]; then
 fi
 
 # Create a Temporary Directory Name
-TMPREPO=$(mktemp -d -t bartXXXX)
+if [ "$HOSTOS" == "Darwin" ]; then
+	TMPREPO=$(mktemp -d -t bart)
+else
+	TMPREPO=$(mktemp -d --tmpdir bart.XXXXXX)
+fi
 if [ -n "$TMPREPO" ]; then
 	trap "rm -rf $TMPREPO" EXIT
 fi

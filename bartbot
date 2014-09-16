@@ -44,6 +44,8 @@ BL="\033[34m"
 MG="\033[35m"
 CY="\033[36m"
 
+HOSTOS=$(uname -s)
+
 # Usage command
 usage () {
 	echo "usage: bartbot [OPTIONS] <project file>"
@@ -186,4 +188,9 @@ fi
 popd
 
 # write out change to lastbuild
-sed -i '' -e 's/^LASTBUILD=\(.*\)$/LASTBUILD='${CURRENTCHANGE}'/' "$PRJFILE"
+if [ "$HOSTOS" == "Darwin" ]; then
+	SEDINPLACE="sed -i ''"
+else
+	SEDINPLACE="sed --in-place"
+fi
+$SEDINPLACE -e 's/^LASTBUILD=\(.*\)$/LASTBUILD='${CURRENTCHANGE}'/' "$PRJFILE"
